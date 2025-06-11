@@ -16,3 +16,6 @@
 * api 서버 프레임워크 선정
 * 일정 기입 api 생성
 * api로 받은 일정을 json 파일로 기록
+
+## Development Setup
+NestJS server located in ./server

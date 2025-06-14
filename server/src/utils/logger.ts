@@ -24,7 +24,7 @@ export const logger = createLogger({
   format: format.combine(
     format.timestamp({ format: 'YYYY_MM_DD HH:mm:ss' }),
     format.printf(({ timestamp, message, className, funcName, title }) => {
-      return `${timestamp} [${className}] [${funcName}] ${title} - ${message}`;
+      return `${String(timestamp)} [${String(className)}] [${String(funcName)}] ${String(title)} - ${String(message)}`;
     }),
   ),
   transports: [rotateTransport],

@@ -13,8 +13,10 @@ export class ScheduleService {
       const data = await fs.readFile(this.filePath, 'utf-8');
       return JSON.parse(data) as Schedule[];
     } catch (err: any) {
-      if (err.code === 'ENOENT') {
-        await fs.mkdir(join(__dirname, '..', '..', 'data'), { recursive: true });
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+        await fs.mkdir(join(__dirname, '..', '..', 'data'), {
+          recursive: true,
+        });
         await fs.writeFile(this.filePath, '[]');
         return [];
       }
@@ -44,7 +46,10 @@ export class ScheduleService {
     return data.find((s) => s.id === id);
   }
 
-  async update(id: string, update: Partial<Schedule>): Promise<Schedule | undefined> {
+  async update(
+    id: string,
+    update: Partial<Schedule>,
+  ): Promise<Schedule | undefined> {
     const data = await this.readData();
     const index = data.findIndex((s) => s.id === id);
     if (index === -1) {

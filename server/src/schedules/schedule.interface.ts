@@ -1,6 +1,7 @@
 export interface Schedule {
   id: string;
   userId: string;
+  calendarId: string;
   title: string;
   startDateTime: string; // YYYYMMDDHHmmss
   endDateTime: string; // YYYYMMDDHHmmss

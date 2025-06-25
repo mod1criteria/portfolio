@@ -32,6 +32,7 @@ export class ScheduleController {
         summary: 'Example schedule',
         value: {
           userId: 'user123',
+          calendarId: 'calendar123',
           title: 'Team meeting',
           startDateTime: '20231001090000', // YYYYMMDDHHmmss
           endDateTime: '20231001100000', // YYYYMMDDHHmmss
@@ -51,15 +52,21 @@ export class ScheduleController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all schedules (optionally by userId)' })
+  @ApiOperation({ summary: 'Get all schedules (optionally by userId and calendarId)' })
   @ApiQuery({
     name: 'userId',
     required: false,
     description: 'Filter schedules for the given user ID',
     example: 'user123',
   })
-  findAll(@Query('userId') userId?: string) {
-    return this.scheduleService.findAll(userId);
+  @ApiQuery({
+    name: 'calendarId',
+    required: false,
+    description: 'Filter schedules for the given calendar ID',
+    example: 'calendar123',
+  })
+  findAll(@Query('userId') userId?: string, @Query('calendarId') calendarId?: string) {
+    return this.scheduleService.findAll(userId, calendarId);
   }
 
   @Get(':id')

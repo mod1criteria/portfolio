@@ -36,9 +36,17 @@ export class ScheduleService {
     return newSchedule;
   }
 
-  async findAll(userId?: string): Promise<Schedule[]> {
+  async findAll(userId?: string, calendarId?: string): Promise<Schedule[]> {
     const data = await this.readData();
-    return userId ? data.filter((s) => s.userId === userId) : data;
+    return data.filter((s) => {
+      if (userId && s.userId !== userId) {
+        return false;
+      }
+      if (calendarId && s.calendarId !== calendarId) {
+        return false;
+      }
+      return true;
+    });
   }
 
   async findOne(id: string): Promise<Schedule | undefined> {

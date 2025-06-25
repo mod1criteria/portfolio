@@ -25,6 +25,12 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## 인증 모듈 추가
+
+JWT 기반 인증 모듈이 추가되었습니다. 로그인 시 Access Token은 15분,
+Refresh Token은 7일 동안 유효합니다. Refresh Token은 DB와 HttpOnly 쿠키에
+저장됩니다.
+
 ## Project setup
 
 ```bash

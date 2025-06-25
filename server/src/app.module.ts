@@ -4,10 +4,10 @@ import { AppService } from './app.service';
 import { ScheduleModule } from './schedules/schedule.module';
 import { CalendarModule } from './calendars/calendar.module';
 import { UserModule } from './users/user.module';
-import { SQLiteModule } from './db/sqlite.module';
+import { DatabaseModule } from './db/database.module';
 
 @Module({
-  imports: [SQLiteModule, ScheduleModule, CalendarModule, UserModule],
+  imports: [DatabaseModule, ScheduleModule, CalendarModule, UserModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -2,18 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { User } from './user.interface';
 import { CalendarService } from '../calendars/calendar.service';
-import { SQLiteService } from '../db/sqlite.service';
+import { DatabaseService } from '../db/database.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly calendarService: CalendarService,
-    private readonly db: SQLiteService,
+    private readonly db: DatabaseService,
   ) {}
 
   async create(user: Omit<User, 'id'>): Promise<User> {
     const id = randomUUID();
-    await this.db.run(`INSERT INTO users (id, name, email) VALUES (?, ?, ?)`, [id, user.name, user.email]);
+    await this.db.run(`INSERT INTO users (id, name, email) VALUES (?, ?, ?)`, [
+      id,
+      user.name,
+      user.email,
+    ]);
     const newUser: User = { id, ...user };
     await this.calendarService.create({ userId: newUser.id, name: 'default' });
     return newUser;
@@ -31,7 +35,11 @@ export class UserService {
     const existing = await this.findOne(id);
     if (!existing) return undefined;
     const merged = { ...existing, ...update };
-    await this.db.run(`UPDATE users SET name = ?, email = ? WHERE id = ?`, [merged.name, merged.email, id]);
+    await this.db.run(`UPDATE users SET name = ?, email = ? WHERE id = ?`, [
+      merged.name,
+      merged.email,
+      id,
+    ]);
     return merged;
   }
 

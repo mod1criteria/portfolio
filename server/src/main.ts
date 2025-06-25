@@ -6,7 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = new DocumentBuilder()
     .setTitle('Schedule API')
-    .setDescription('API for managing schedules')
+    .setDescription('API for managing users, calendars and schedules')
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);

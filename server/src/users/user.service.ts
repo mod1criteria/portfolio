@@ -1,67 +1,44 @@
 import { Injectable } from '@nestjs/common';
-import { promises as fs } from 'fs';
-import { join } from 'path';
 import { randomUUID } from 'crypto';
 import { User } from './user.interface';
 import { CalendarService } from '../calendars/calendar.service';
+import { SQLiteService } from '../db/sqlite.service';
 
 @Injectable()
 export class UserService {
-  private filePath = join(__dirname, '..', '..', 'data', 'users.json');
-
-  constructor(private readonly calendarService: CalendarService) {}
-
-  private async readData(): Promise<User[]> {
-    try {
-      const data = await fs.readFile(this.filePath, 'utf-8');
-      return JSON.parse(data) as User[];
-    } catch (err: any) {
-      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-        await fs.mkdir(join(__dirname, '..', '..', 'data'), { recursive: true });
-        await fs.writeFile(this.filePath, '[]');
-        return [];
-      }
-      throw err;
-    }
-  }
-
-  private async writeData(data: User[]): Promise<void> {
-    await fs.writeFile(this.filePath, JSON.stringify(data, null, 2));
-  }
+  constructor(
+    private readonly calendarService: CalendarService,
+    private readonly db: SQLiteService,
+  ) {}
 
   async create(user: Omit<User, 'id'>): Promise<User> {
-    const data = await this.readData();
-    const newUser: User = { id: randomUUID(), ...user };
-    data.push(newUser);
-    await this.writeData(data);
+    const id = randomUUID();
+    await this.db.run(`INSERT INTO users (id, name, email) VALUES (?, ?, ?)`, [id, user.name, user.email]);
+    const newUser: User = { id, ...user };
     await this.calendarService.create({ userId: newUser.id, name: 'default' });
     return newUser;
   }
 
   async findAll(): Promise<User[]> {
-    return this.readData();
+    return this.db.all<User>(`SELECT * FROM users`);
   }
 
   async findOne(id: string): Promise<User | undefined> {
-    const data = await this.readData();
-    return data.find((u) => u.id === id);
+    return this.db.get<User>(`SELECT * FROM users WHERE id = ?`, [id]);
   }
 
   async update(id: string, update: Partial<User>): Promise<User | undefined> {
-    const data = await this.readData();
-    const index = data.findIndex((u) => u.id === id);
-    if (index === -1) return undefined;
-    data[index] = { ...data[index], ...update, id };
-    await this.writeData(data);
-    return data[index];
+    const existing = await this.findOne(id);
+    if (!existing) return undefined;
+    const merged = { ...existing, ...update };
+    await this.db.run(`UPDATE users SET name = ?, email = ? WHERE id = ?`, [merged.name, merged.email, id]);
+    return merged;
   }
 
   async remove(id: string): Promise<boolean> {
-    const data = await this.readData();
-    const index = data.findIndex((u) => u.id === id);
-    if (index === -1) return false;
-    data.splice(index, 1);
-    await this.writeData(data);
+    const existing = await this.findOne(id);
+    if (!existing) return false;
+    await this.db.run(`DELETE FROM users WHERE id = ?`, [id]);
     return true;
   }
 }

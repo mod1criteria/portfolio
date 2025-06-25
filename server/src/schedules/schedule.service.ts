@@ -1,81 +1,105 @@
 import { Injectable } from '@nestjs/common';
-import { promises as fs } from 'fs';
-import { join } from 'path';
 import { randomUUID } from 'crypto';
+import { SQLiteService } from '../db/sqlite.service';
 import { Schedule } from './schedule.interface';
 
 @Injectable()
 export class ScheduleService {
-  private filePath = join(__dirname, '..', '..', 'data', 'schedules.json');
-
-  private async readData(): Promise<Schedule[]> {
-    try {
-      const data = await fs.readFile(this.filePath, 'utf-8');
-      return JSON.parse(data) as Schedule[];
-    } catch (err: any) {
-      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-        await fs.mkdir(join(__dirname, '..', '..', 'data'), {
-          recursive: true,
-        });
-        await fs.writeFile(this.filePath, '[]');
-        return [];
-      }
-      throw err;
-    }
-  }
-
-  private async writeData(data: Schedule[]): Promise<void> {
-    await fs.writeFile(this.filePath, JSON.stringify(data, null, 2));
-  }
+  constructor(private readonly db: SQLiteService) {}
 
   async create(schedule: Omit<Schedule, 'id'>): Promise<Schedule> {
-    const data = await this.readData();
-    const newSchedule: Schedule = { id: randomUUID(), ...schedule };
-    data.push(newSchedule);
-    await this.writeData(data);
-    return newSchedule;
+    const id = randomUUID();
+    await this.db.run(
+      `INSERT INTO schedules (
+        id, userId, calendarId, title, startDateTime, endDateTime, allDay, location, alarm, color, isRepeat, repeatId, participants, description
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        schedule.userId,
+        schedule.calendarId,
+        schedule.title,
+        schedule.startDateTime,
+        schedule.endDateTime,
+        schedule.allDay ? 1 : 0,
+        schedule.location ?? null,
+        schedule.alarm ? JSON.stringify(schedule.alarm) : null,
+        schedule.color ?? null,
+        schedule.isRepeat ? 1 : 0,
+        schedule.repeatId ?? null,
+        schedule.participants ? JSON.stringify(schedule.participants) : null,
+        schedule.description ?? null,
+      ],
+    );
+    return { id, ...schedule };
   }
 
   async findAll(userId?: string, calendarId?: string): Promise<Schedule[]> {
-    const data = await this.readData();
-    return data.filter((s) => {
-      if (userId && s.userId !== userId) {
-        return false;
-      }
-      if (calendarId && s.calendarId !== calendarId) {
-        return false;
-      }
-      return true;
-    });
+    const clauses: string[] = [];
+    const params: any[] = [];
+    if (userId) {
+      clauses.push('userId = ?');
+      params.push(userId);
+    }
+    if (calendarId) {
+      clauses.push('calendarId = ?');
+      params.push(calendarId);
+    }
+    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+    const rows = await this.db.all<Schedule>(`SELECT * FROM schedules ${where}`, params);
+    return rows;
   }
 
   async findOne(id: string): Promise<Schedule | undefined> {
-    const data = await this.readData();
-    return data.find((s) => s.id === id);
+    return this.db.get<Schedule>(`SELECT * FROM schedules WHERE id = ?`, [id]);
   }
 
   async update(
     id: string,
     update: Partial<Schedule>,
   ): Promise<Schedule | undefined> {
-    const data = await this.readData();
-    const index = data.findIndex((s) => s.id === id);
-    if (index === -1) {
-      return undefined;
-    }
-    data[index] = { ...data[index], ...update, id };
-    await this.writeData(data);
-    return data[index];
+    const existing = await this.findOne(id);
+    if (!existing) return undefined;
+    const merged = { ...existing, ...update } as Schedule;
+    await this.db.run(
+      `UPDATE schedules SET
+        userId = ?,
+        calendarId = ?,
+        title = ?,
+        startDateTime = ?,
+        endDateTime = ?,
+        allDay = ?,
+        location = ?,
+        alarm = ?,
+        color = ?,
+        isRepeat = ?,
+        repeatId = ?,
+        participants = ?,
+        description = ?
+      WHERE id = ?`,
+      [
+        merged.userId,
+        merged.calendarId,
+        merged.title,
+        merged.startDateTime,
+        merged.endDateTime,
+        merged.allDay ? 1 : 0,
+        merged.location ?? null,
+        merged.alarm ? JSON.stringify(merged.alarm) : null,
+        merged.color ?? null,
+        merged.isRepeat ? 1 : 0,
+        merged.repeatId ?? null,
+        merged.participants ? JSON.stringify(merged.participants) : null,
+        merged.description ?? null,
+        id,
+      ],
+    );
+    return merged;
   }
 
   async remove(id: string): Promise<boolean> {
-    const data = await this.readData();
-    const index = data.findIndex((s) => s.id === id);
-    if (index === -1) {
-      return false;
-    }
-    data.splice(index, 1);
-    await this.writeData(data);
+    const existing = await this.findOne(id);
+    if (!existing) return false;
+    await this.db.run(`DELETE FROM schedules WHERE id = ?`, [id]);
     return true;
   }
 }

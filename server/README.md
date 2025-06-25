@@ -96,3 +96,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+20250625
+스캐쥴 바디데이터 포맷팅 변경
+자료형, 함수의 리턴 자료형 누락부분 추가.

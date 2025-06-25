@@ -33,10 +33,13 @@ export class ScheduleController {
         value: {
           userId: 'user123',
           title: 'Team meeting',
-          date: '2024-01-15',
-          startTime: '09:00',
-          endTime: '10:00',
+          startDateTime: '20231001090000', // YYYYMMDDHHmmss
+          endDateTime: '20231001100000', // YYYYMMDDHHmmss
           location: 'Seoul HQ',
+          alarm: {}, // Example alarm object
+          color: '#FF5733', // Example hex color code
+          isRepeat: false,
+          repeatId: null, // No repeat rule
           participants: ['alice@example.com', 'bob@example.com'],
           description: 'Monthly planning meeting',
         },

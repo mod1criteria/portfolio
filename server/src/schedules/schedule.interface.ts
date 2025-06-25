@@ -1,12 +1,15 @@
 export interface Schedule {
   id: string;
   userId: string;
-  title?: string;
-  date: string; // YYYY-MM-DD
-  startTime?: string; // HH:mm
-  endTime?: string; // HH:mm
+  title: string;
+  startDateTime: string; // YYYYMMDDHHmmss
+  endDateTime: string; // YYYYMMDDHHmmss
   allDay?: boolean;
   location?: string;
-  participants?: string[];
+  alarm?: any; // Alarm object or null
+  color?: string; // Hex color code
+  isRepeat?: boolean; // Repeat rule or null
+  repeatId?: string; // ID for recurring events
+  participants?: any[];
   description?: string;
 }

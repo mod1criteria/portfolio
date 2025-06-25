@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { User } from './user.interface';
 import { UserService } from './user.service';
@@ -8,7 +16,7 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
+  @Post('register')
   @ApiOperation({ summary: 'Create a new user (with default calendar)' })
   @ApiBody({
     description: 'User data',
@@ -18,11 +26,12 @@ export class UserController {
         value: {
           name: 'Alice',
           email: 'alice@example.com',
+          password: 'pass1234',
         },
       },
     },
   })
-  create(@Body() user: Omit<User, 'id'>) {
+  register(@Body() user: Omit<User, 'id'>) {
     return this.userService.create(user);
   }
 
@@ -42,9 +51,25 @@ export class UserController {
   @Put(':id')
   @ApiOperation({ summary: 'Update a user by id' })
   @ApiParam({ name: 'id', description: 'ID of the user', example: '1' })
-  @ApiBody({ description: 'Fields to update', examples: { rename: { summary: 'Rename', value: { name: 'Bob' } } } })
+  @ApiBody({
+    description: 'Fields to update',
+    examples: { rename: { summary: 'Rename', value: { name: 'Bob' } } },
+  })
   update(@Param('id') id: string, @Body() update: Partial<User>) {
     return this.userService.update(id, update);
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password by email' })
+  @ApiBody({
+    schema: {
+      example: { email: 'alice@example.com', password: 'newpass' },
+    },
+  })
+  async resetPassword(@Body() body: { email: string; password: string }) {
+    const user = await this.userService.findByEmail(body.email);
+    if (!user) return undefined;
+    return this.userService.update(user.id, { password: body.password });
   }
 
   @Delete(':id')

@@ -22,7 +22,18 @@ export class SQLiteService
         `CREATE TABLE IF NOT EXISTS users (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
-          email TEXT NOT NULL
+          email TEXT NOT NULL,
+          password TEXT NOT NULL
+        )`,
+      );
+      // older databases may lack the password column
+      this.db.run(`ALTER TABLE users ADD COLUMN password TEXT`, () => {});
+      this.db.run(
+        `CREATE TABLE IF NOT EXISTS refresh_tokens (
+          id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL,
+          tokenHash TEXT NOT NULL,
+          expiresAt INTEGER NOT NULL
         )`,
       );
       this.db.run(

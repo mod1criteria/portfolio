@@ -1,9 +1,13 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Database } from 'sqlite3';
 import { join } from 'path';
+import { DatabaseService } from './database.service';
 
 @Injectable()
-export class SQLiteService implements OnModuleInit, OnModuleDestroy {
+export class SQLiteService
+  extends DatabaseService
+  implements OnModuleInit, OnModuleDestroy
+{
   private db!: Database;
 
   onModuleInit() {

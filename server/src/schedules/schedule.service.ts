@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { SQLiteService } from '../db/sqlite.service';
+import { DatabaseService } from '../db/database.service';
 import { Schedule } from './schedule.interface';
 
 @Injectable()
 export class ScheduleService {
-  constructor(private readonly db: SQLiteService) {}
+  constructor(private readonly db: DatabaseService) {}
 
   async create(schedule: Omit<Schedule, 'id'>): Promise<Schedule> {
     const id = randomUUID();
@@ -45,7 +45,10 @@ export class ScheduleService {
       params.push(calendarId);
     }
     const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-    const rows = await this.db.all<Schedule>(`SELECT * FROM schedules ${where}`, params);
+    const rows = await this.db.all<Schedule>(
+      `SELECT * FROM schedules ${where}`,
+      params,
+    );
     return rows;
   }
 

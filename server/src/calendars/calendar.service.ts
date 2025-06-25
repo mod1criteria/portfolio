@@ -1,68 +1,47 @@
 import { Injectable } from '@nestjs/common';
-import { promises as fs } from 'fs';
-import { join } from 'path';
 import { randomUUID } from 'crypto';
+import { SQLiteService } from '../db/sqlite.service';
 import { Calendar } from './calendar.interface';
 
 @Injectable()
 export class CalendarService {
-  private filePath = join(__dirname, '..', '..', 'data', 'calendars.json');
-
-  private async readData(): Promise<Calendar[]> {
-    try {
-      const data = await fs.readFile(this.filePath, 'utf-8');
-      return JSON.parse(data) as Calendar[];
-    } catch (err: any) {
-      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-        await fs.mkdir(join(__dirname, '..', '..', 'data'), { recursive: true });
-        await fs.writeFile(this.filePath, '[]');
-        return [];
-      }
-      throw err;
-    }
-  }
-
-  private async writeData(data: Calendar[]): Promise<void> {
-    await fs.writeFile(this.filePath, JSON.stringify(data, null, 2));
-  }
+  constructor(private readonly db: SQLiteService) {}
 
   async create(calendar: Omit<Calendar, 'id'>): Promise<Calendar> {
-    const data = await this.readData();
-    const newCalendar: Calendar = { id: randomUUID(), ...calendar };
-    data.push(newCalendar);
-    await this.writeData(data);
-    return newCalendar;
+    const id = randomUUID();
+    await this.db.run(
+      `INSERT INTO calendars (id, userId, name, color, description) VALUES (?, ?, ?, ?, ?)`,
+      [id, calendar.userId, calendar.name, calendar.color ?? null, calendar.description ?? null],
+    );
+    return { id, ...calendar };
   }
 
   async findAll(userId?: string): Promise<Calendar[]> {
-    const data = await this.readData();
-    return userId ? data.filter((c) => c.userId === userId) : data;
+    if (userId) {
+      return this.db.all<Calendar>(`SELECT * FROM calendars WHERE userId = ?`, [userId]);
+    }
+    return this.db.all<Calendar>(`SELECT * FROM calendars`);
   }
 
   async findOne(id: string): Promise<Calendar | undefined> {
-    const data = await this.readData();
-    return data.find((c) => c.id === id);
+    return this.db.get<Calendar>(`SELECT * FROM calendars WHERE id = ?`, [id]);
   }
 
   async update(id: string, update: Partial<Calendar>): Promise<Calendar | undefined> {
-    const data = await this.readData();
-    const index = data.findIndex((c) => c.id === id);
-    if (index === -1) {
-      return undefined;
-    }
-    data[index] = { ...data[index], ...update, id };
-    await this.writeData(data);
-    return data[index];
+    const existing = await this.findOne(id);
+    if (!existing) return undefined;
+    const merged = { ...existing, ...update };
+    await this.db.run(
+      `UPDATE calendars SET userId = ?, name = ?, color = ?, description = ? WHERE id = ?`,
+      [merged.userId, merged.name, merged.color ?? null, merged.description ?? null, id],
+    );
+    return merged;
   }
 
   async remove(id: string): Promise<boolean> {
-    const data = await this.readData();
-    const index = data.findIndex((c) => c.id === id);
-    if (index === -1) {
-      return false;
-    }
-    data.splice(index, 1);
-    await this.writeData(data);
+    const existing = await this.findOne(id);
+    if (!existing) return false;
+    await this.db.run(`DELETE FROM calendars WHERE id = ?`, [id]);
     return true;
   }
 }

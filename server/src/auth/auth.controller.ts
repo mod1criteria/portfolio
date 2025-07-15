@@ -5,7 +5,10 @@ import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { UserService } from '../users/user.service';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { LoginDto } from './dto/login.dto';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -14,10 +17,9 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  async login(
-    @Body() body: { email: string; password: string },
-    @Res() res: Response,
-  ) {
+  @ApiOperation({ summary: 'User login' })
+  @ApiBody({ type: LoginDto })
+  async login(@Body() body: LoginDto, @Res() res: Response) {
     const user = await this.auth.validateUser(body.email, body.password);
     if (!user) {
       return res.status(401).send('Invalid credentials');
@@ -31,6 +33,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @ApiOperation({ summary: 'Refresh access token' })
   async refresh(@Req() req: Request, @Res() res: Response) {
     const { cookies } = req as Request & { cookies?: Record<string, string> };
     const token = cookies?.refresh;
@@ -45,6 +48,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @ApiOperation({ summary: 'User logout' })
   async logout(@Req() req: Request, @Res() res: Response) {
     const { cookies } = req as Request & { cookies?: Record<string, string> };
     const token = cookies?.refresh;

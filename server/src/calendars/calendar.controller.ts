@@ -1,6 +1,22 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { Calendar } from './calendar.interface';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { CreateCalendarDto } from './dto/create-calendar.dto';
+import { UpdateCalendarDto } from './dto/update-calendar.dto';
 import { CalendarService } from './calendar.service';
 
 @ApiTags('calendars')
@@ -10,21 +26,8 @@ export class CalendarController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new calendar' })
-  @ApiBody({
-    description: 'Calendar data',
-    examples: {
-      default: {
-        summary: 'Example calendar',
-        value: {
-          userId: 'user123',
-          name: 'Work',
-          color: '#FF0000',
-          description: 'Work related events',
-        },
-      },
-    },
-  })
-  create(@Body() calendar: Omit<Calendar, 'id'>) {
+  @ApiBody({ type: CreateCalendarDto })
+  create(@Body() calendar: CreateCalendarDto) {
     return this.calendarService.create(calendar);
   }
 
@@ -50,8 +53,8 @@ export class CalendarController {
   @Put(':id')
   @ApiOperation({ summary: 'Update a calendar by id' })
   @ApiParam({ name: 'id', description: 'ID of the calendar', example: '1' })
-  @ApiBody({ description: 'Fields to update', examples: { rename: { summary: 'Rename', value: { name: 'Personal' } } } })
-  update(@Param('id') id: string, @Body() update: Partial<Calendar>) {
+  @ApiBody({ type: UpdateCalendarDto })
+  update(@Param('id') id: string, @Body() update: UpdateCalendarDto) {
     return this.calendarService.update(id, update);
   }
 

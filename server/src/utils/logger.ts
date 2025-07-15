@@ -73,4 +73,3 @@ export function log(title: string, message: string) {
   const { className, funcName } = getCallerInfo();
   logger.info(message, { className, funcName, title });
 }
-

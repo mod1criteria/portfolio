@@ -19,3 +19,13 @@
 
 ## Development Setup
 NestJS server located in ./server
+
+## Frontend (React)
+`./client` 폴더에 간단한 React SPA가 포함되어 있습니다. 별도의 빌드 과정 없이 정적 파일로 동작하므로 아무 정적 서버에서나 제공할 수 있습니다.
+
+### 실행 예시
+```bash
+# 루트 폴더에서 간단한 http 서버 실행
+npx http-server -p 3000
+```
+이후 브라우저에서 `http://localhost:3000/client/` 경로를 열면 로그인 화면이 나타납니다.

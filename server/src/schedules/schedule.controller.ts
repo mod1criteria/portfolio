@@ -15,7 +15,8 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { Schedule } from './schedule.interface';
+import { CreateScheduleDto } from './dto/create-schedule.dto';
+import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { ScheduleService } from './schedule.service';
 
 @ApiTags('schedules')
@@ -25,34 +26,15 @@ export class ScheduleController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new schedule' })
-  @ApiBody({
-    description: 'Details of the schedule to create',
-    examples: {
-      default: {
-        summary: 'Example schedule',
-        value: {
-          userId: 'user123',
-          calendarId: 'calendar123',
-          title: 'Team meeting',
-          startDateTime: '20231001090000', // YYYYMMDDHHmmss
-          endDateTime: '20231001100000', // YYYYMMDDHHmmss
-          location: 'Seoul HQ',
-          alarm: {}, // Example alarm object
-          color: '#FF5733', // Example hex color code
-          isRepeat: false,
-          repeatId: null, // No repeat rule
-          participants: ['alice@example.com', 'bob@example.com'],
-          description: 'Monthly planning meeting',
-        },
-      },
-    },
-  })
-  create(@Body() schedule: Omit<Schedule, 'id'>) {
+  @ApiBody({ type: CreateScheduleDto })
+  create(@Body() schedule: CreateScheduleDto) {
     return this.scheduleService.create(schedule);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all schedules (optionally by userId and calendarId)' })
+  @ApiOperation({
+    summary: 'Get all schedules (optionally by userId and calendarId)',
+  })
   @ApiQuery({
     name: 'userId',
     required: false,
@@ -65,7 +47,10 @@ export class ScheduleController {
     description: 'Filter schedules for the given calendar ID',
     example: 'calendar123',
   })
-  findAll(@Query('userId') userId?: string, @Query('calendarId') calendarId?: string) {
+  findAll(
+    @Query('userId') userId?: string,
+    @Query('calendarId') calendarId?: string,
+  ) {
     return this.scheduleService.findAll(userId, calendarId);
   }
 
@@ -87,16 +72,8 @@ export class ScheduleController {
     description: 'ID of the schedule to update',
     example: 'a1b2c3',
   })
-  @ApiBody({
-    description: 'Partial schedule fields to update',
-    examples: {
-      updateTitle: {
-        summary: 'Update the title and time',
-        value: { title: 'Updated meeting', startTime: '10:00' },
-      },
-    },
-  })
-  update(@Param('id') id: string, @Body() update: Partial<Schedule>) {
+  @ApiBody({ type: UpdateScheduleDto })
+  update(@Param('id') id: string, @Body() update: UpdateScheduleDto) {
     return this.scheduleService.update(id, update);
   }
 

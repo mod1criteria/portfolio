@@ -8,7 +8,9 @@ import {
   Put,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { User } from './user.interface';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UserService } from './user.service';
 
 @ApiTags('users')
@@ -18,20 +20,8 @@ export class UserController {
 
   @Post('register')
   @ApiOperation({ summary: 'Create a new user (with default calendar)' })
-  @ApiBody({
-    description: 'User data',
-    examples: {
-      default: {
-        summary: 'Example user',
-        value: {
-          name: 'Alice',
-          email: 'alice@example.com',
-          password: 'pass1234',
-        },
-      },
-    },
-  })
-  register(@Body() user: Omit<User, 'id'>) {
+  @ApiBody({ type: CreateUserDto })
+  register(@Body() user: CreateUserDto) {
     return this.userService.create(user);
   }
 
@@ -51,22 +41,15 @@ export class UserController {
   @Put(':id')
   @ApiOperation({ summary: 'Update a user by id' })
   @ApiParam({ name: 'id', description: 'ID of the user', example: '1' })
-  @ApiBody({
-    description: 'Fields to update',
-    examples: { rename: { summary: 'Rename', value: { name: 'Bob' } } },
-  })
-  update(@Param('id') id: string, @Body() update: Partial<User>) {
+  @ApiBody({ type: UpdateUserDto })
+  update(@Param('id') id: string, @Body() update: UpdateUserDto) {
     return this.userService.update(id, update);
   }
 
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password by email' })
-  @ApiBody({
-    schema: {
-      example: { email: 'alice@example.com', password: 'newpass' },
-    },
-  })
-  async resetPassword(@Body() body: { email: string; password: string }) {
+  @ApiBody({ type: ResetPasswordDto })
+  async resetPassword(@Body() body: ResetPasswordDto) {
     const user = await this.userService.findByEmail(body.email);
     if (!user) return undefined;
     return this.userService.update(user.id, { password: body.password });
